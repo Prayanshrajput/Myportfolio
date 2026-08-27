@@ -14,12 +14,10 @@ export default function Home() {
       <Experience />
       <Projects />
       <Contact />
-      
+
       {/* Footer */}
       <footer className="py-8 border-t border-white/5 text-center text-sm text-gray-500 glass mt-auto relative z-10">
         <div className="container mx-auto">
-          <p>© {new Date().getFullYear()} Prayansh Rajput. All rights reserved.</p>
-          <p className="mt-2 text-xs">Built with Next.js, Tailwind CSS & Framer Motion.</p>
         </div>
       </footer>
     </>

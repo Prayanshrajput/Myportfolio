@@ -1,10 +1,46 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { portfolioData } from "@/data/portfolioData";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { Mail, MapPin, Loader2 } from "lucide-react";
+
+const FLOW_URL = "https://flow.sokt.io/func/scriFwIfvcac";
 
 export default function Contact() {
+  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [status, setStatus] = useState({ state: "idle", message: "" });
+
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (status.state === "sending") return;
+
+    setStatus({ state: "sending", message: "" });
+
+    try {
+      const res = await fetch(FLOW_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: `Portfolio contact from ${form.name || "Anonymous"}`,
+          body: form.message,
+          email: form.email,
+        }),
+      });
+
+      if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+
+      setForm({ name: "", email: "", message: "" });
+      setStatus({ state: "success", message: "Thanks! Your message is on its way." });
+    } catch (err) {
+      setStatus({ state: "error", message: "Something went wrong. Please email me directly." });
+    }
+  };
+
   return (
     <section id="contact" className="py-24 relative bg-black/40 border-t border-white/5 overflow-hidden">
       {/* Background glow */}
@@ -44,19 +80,6 @@ export default function Contact() {
                 </a>
               </div>
             </div>
-
-            <div className="flex items-start gap-6">
-              <div className="p-4 rounded-xl glass text-accent flex-shrink-0 border border-accent/20 shadow-[0_0_15px_rgba(139,92,246,0.2)]">
-                <Phone className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white mb-1">Phone</h3>
-                <a href={`tel:${portfolioData.phone.replace(/\s+/g, '')}`} className="text-gray-400 hover:text-accent transition-colors">
-                  {portfolioData.phone}
-                </a>
-              </div>
-            </div>
-
             <div className="flex items-start gap-6">
               <div className="p-4 rounded-xl glass text-blue-400 flex-shrink-0 border border-blue-400/20 shadow-[0_0_15px_rgba(96,165,250,0.2)]">
                 <MapPin className="w-6 h-6" />
@@ -77,22 +100,28 @@ export default function Contact() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="glass p-8 rounded-2xl border border-white/10"
           >
-            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-1">Name</label>
-                <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors" placeholder="John Doe" />
+                <input name="name" value={form.name} onChange={handleChange} required type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors" placeholder="John Doe" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-1">Email</label>
-                <input type="email" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors" placeholder="john@example.com" />
+                <input name="email" value={form.email} onChange={handleChange} required type="email" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors" placeholder="john@example.com" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-1">Message</label>
-                <textarea rows="4" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors resize-none" placeholder="Your message here..."></textarea>
+                <textarea name="message" value={form.message} onChange={handleChange} required rows="4" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors resize-none" placeholder="Your message here..."></textarea>
               </div>
-              <button type="submit" className="w-full py-4 rounded-xl bg-primary text-white font-bold hover:bg-blue-600 transition-colors shadow-[0_0_20px_-5px_rgba(59,130,246,0.6)]">
-                Send Message
+              <button type="submit" disabled={status.state === "sending"} className="w-full py-4 rounded-xl bg-primary text-white font-bold hover:bg-blue-600 transition-colors shadow-[0_0_20px_-5px_rgba(59,130,246,0.6)] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                {status.state === "sending" && <Loader2 className="w-5 h-5 animate-spin" />}
+                {status.state === "sending" ? "Sending..." : "Send Message"}
               </button>
+              {status.message && (
+                <p className={`text-sm text-center ${status.state === "success" ? "text-green-400" : "text-red-400"}`}>
+                  {status.message}
+                </p>
+              )}
             </form>
           </motion.div>
         </div>
